@@ -1,3 +1,5 @@
 #!/bin/bash
 
-docker push mariuszba/aimrank-cluster:$1
+echo $CR_PAT | docker login ghcr.io -u $CR_USER --password-stdin
+
+docker push ghcr.io/aimrank/aimrank-cluster:$1
