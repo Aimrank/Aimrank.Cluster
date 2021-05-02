@@ -51,7 +51,7 @@ namespace Aimrank.Cluster.Core.Clients
 
             var response = await httpClient.PostAsJsonAsync($"http://{server.Pod.IpAddress}/server", new
             {
-                server.Id,
+                MatchId = server.Id,
                 SteamToken = server.SteamToken.Token,
                 Map = map,
                 Whitelist = whitelist

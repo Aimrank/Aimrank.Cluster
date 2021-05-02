@@ -1,18 +1,17 @@
 FROM mcr.microsoft.com/dotnet/sdk:5.0-focal AS build
 WORKDIR /app
 
-COPY *.sln .
 COPY src/Aimrank.Cluster.Api/*.csproj ./src/Aimrank.Cluster.Api/
 COPY src/Aimrank.Cluster.Core/*.csproj ./src/Aimrank.Cluster.Core/
 COPY src/Aimrank.Cluster.Infrastructure/*.csproj ./src/Aimrank.Cluster.Infrastructure/
 
-RUN dotnet restore
+RUN dotnet restore src/Aimrank.Cluster.Api
 
 COPY src/Aimrank.Cluster.Api/. ./src/Aimrank.Cluster.Api/
 COPY src/Aimrank.Cluster.Core/. ./src/Aimrank.Cluster.Core/
 COPY src/Aimrank.Cluster.Infrastructure/. ./src/Aimrank.Cluster.Infrastructure/
 
-RUN dotnet publish -c Release -o /app/out
+RUN dotnet publish src/Aimrank.Cluster.Api -c Release -o /app/out
 
 FROM mcr.microsoft.com/dotnet/aspnet:5.0
 WORKDIR /app
@@ -26,4 +25,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=5 \
   
 ENV ASPNETCORE_ENVIRONMENT=Production
 
-ENTRYPOINT ["Aimrank.Cluster.Api.dll"]
+ENTRYPOINT ["dotnet", "Aimrank.Cluster.Api.dll"]
