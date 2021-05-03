@@ -30,7 +30,6 @@ namespace Aimrank.Cluster.Infrastructure
         {
             builder.UseProcessing();
             builder.UseQuartz();
-            builder.UseEventBus();
             
             return builder;
         }

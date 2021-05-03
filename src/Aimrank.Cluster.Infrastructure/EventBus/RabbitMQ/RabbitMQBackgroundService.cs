@@ -6,7 +6,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client.Events;
-using RabbitMQ.Client.Exceptions;
 using RabbitMQ.Client;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,9 +24,9 @@ namespace Aimrank.Cluster.Infrastructure.EventBus.RabbitMQ
         private readonly RabbitMQEventSerializer _eventSerializer;
         private readonly ILogger<RabbitMQBackgroundService> _logger;
         private readonly IServiceScopeFactory _serviceScopeFactory;
-        private IBasicProperties _basicProperties;
-        private IConnection _connection;
-        private IModel _channel;
+        private readonly IBasicProperties _basicProperties;
+        private readonly IConnection _connection;
+        private readonly IModel _channel;
 
         public RabbitMQBackgroundService(
             IOptions<RabbitMQSettings> rabbitMqSettings,
@@ -45,15 +44,8 @@ namespace Aimrank.Cluster.Infrastructure.EventBus.RabbitMQ
                 .SelectMany(a => a.GetTypes())
                 .Where(t => t.GetCustomAttribute<EventAttribute>() is not null)
                 .ToDictionary(t => routingKeyFactory.Create(t, t.GetCustomAttribute<EventAttribute>().Service));
-        }
-
-        public override void Dispose()
-        {
-            _channel?.Dispose();
-            _connection?.Dispose();
-            base.Dispose();
-        }
-        public void Configure() { _connection = CreateConnection();
+            
+            _connection = CreateConnection();
             _channel = _connection.CreateModel();
             _channel.ExchangeDeclare(_rabbitMqSettings.ExchangeName, "direct", true, false, null);
             _channel.QueueDeclare(_rabbitMqSettings.ServiceName, true, false, false, null);
@@ -66,13 +58,15 @@ namespace Aimrank.Cluster.Infrastructure.EventBus.RabbitMQ
             }
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        public override void Dispose()
         {
-            while (_channel is null)
-            {
-                await Task.Delay(1000, stoppingToken);
-            }
-            
+            _channel?.Dispose();
+            _connection?.Dispose();
+            base.Dispose();
+        }
+
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        {
             var consumer = new AsyncEventingBasicConsumer(_channel);
             
             consumer.Received += async (_, ea) =>
@@ -90,6 +84,8 @@ namespace Aimrank.Cluster.Infrastructure.EventBus.RabbitMQ
             };
             
             _channel.BasicConsume(_rabbitMqSettings.ServiceName, false, consumer: consumer);
+
+            return Task.CompletedTask;
         }
 
         private async Task AddEventToInboxAsync(IEvent @event)
@@ -116,29 +112,8 @@ namespace Aimrank.Cluster.Infrastructure.EventBus.RabbitMQ
                 Password = _rabbitMqSettings.Password,
                 DispatchConsumersAsync = true
             };
-
-            var attempts = 0;
-
-            while (attempts <= _rabbitMqSettings.MaxRetries)
-            {
-                try
-                {
-                    return factory.CreateConnection();
-                }
-                catch (BrokerUnreachableException)
-                {
-                    _logger.LogError("Failed to connect to RabbitMQ. Retrying in 10 seconds.");
-
-                    attempts++;
-                    
-                    if (attempts <= _rabbitMqSettings.MaxRetries)
-                    {
-                        Thread.Sleep(10000);
-                    }
-                }
-            }
             
-            throw new Exception("Failed to connect to RabbitMQ.");
+            return factory.CreateConnection();
         }
     }
 }
