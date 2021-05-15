@@ -1,0 +1,5 @@
+{
+  "ConnectionStrings": {
+    "Database": "Host=localhost;Database=aimrank_cluster;Username=aimrank;Password=aimrank"
+  }
+}

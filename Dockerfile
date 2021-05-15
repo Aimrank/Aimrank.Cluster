@@ -4,13 +4,14 @@ WORKDIR /app
 COPY src/Aimrank.Cluster.Api/*.csproj ./src/Aimrank.Cluster.Api/
 COPY src/Aimrank.Cluster.Core/*.csproj ./src/Aimrank.Cluster.Core/
 COPY src/Aimrank.Cluster.Infrastructure/*.csproj ./src/Aimrank.Cluster.Infrastructure/
+COPY src/Aimrank.Cluster.Migrator/*.csproj ./src/Aimrank.Cluster.Migrator/
 
+RUN dotnet restore src/Aimrank.Cluster.Migrator
 RUN dotnet restore src/Aimrank.Cluster.Api
 
-COPY src/Aimrank.Cluster.Api/. ./src/Aimrank.Cluster.Api/
-COPY src/Aimrank.Cluster.Core/. ./src/Aimrank.Cluster.Core/
-COPY src/Aimrank.Cluster.Infrastructure/. ./src/Aimrank.Cluster.Infrastructure/
+COPY . .
 
+RUN dotnet publish src/Aimrank.Cluster.Migrator -c Release -o /app/out
 RUN dotnet publish src/Aimrank.Cluster.Api -c Release -o /app/out
 
 FROM mcr.microsoft.com/dotnet/aspnet:5.0
@@ -25,4 +26,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=5 \
   
 ENV ASPNETCORE_ENVIRONMENT=Production
 
-ENTRYPOINT ["dotnet", "Aimrank.Cluster.Api.dll"]
+CMD ["dotnet", "Aimrank.Cluster.Api.dll"]

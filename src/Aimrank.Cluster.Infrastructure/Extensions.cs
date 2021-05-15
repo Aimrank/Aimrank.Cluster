@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("Aimrank.Cluster.Api")]
+[assembly: InternalsVisibleTo("Aimrank.Cluster.Migrator")]
 
 namespace Aimrank.Cluster.Infrastructure
 {

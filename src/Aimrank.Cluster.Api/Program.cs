@@ -4,14 +4,10 @@ using System.Threading.Tasks;
 
 namespace Aimrank.Cluster.Api
 {
-    public class Program
+    public static class Program
     {
-        public static async Task Main(string[] args)
-        {
-            var host = CreateHostBuilder(args).Build();
-            await host.MigrateDatabaseAsync();
-            await host.RunAsync();
-        }
+        public static Task Main(string[] args)
+            => CreateHostBuilder(args).Build().RunAsync();
 
         private static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
